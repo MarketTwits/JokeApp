@@ -2,6 +2,8 @@ package com.example.jokeapp
 
 
 import com.google.gson.Gson
+import retrofit2.Call
+import retrofit2.http.GET
 import java.io.BufferedInputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -9,44 +11,7 @@ import java.net.URL
 import java.net.UnknownHostException
 
 interface JokeService {
-    fun joke(callback: ServiceCallback)
-
-    class Base(
-        private val gson : Gson
-    ) : JokeService {
-        override fun joke(callback: ServiceCallback) {
-            Thread{
-                var connection : HttpURLConnection? = null
-                try {
-                    val url = URL(JOKE_URL)
-                    connection = url.openConnection() as HttpURLConnection
-                    InputStreamReader(BufferedInputStream(connection.inputStream)).use{
-                        val text = it.readText()
-                        callback.returnSuccess(gson.fromJson(text, JokeCloud::class.java))
-                    }
-                }catch (e : Exception){
-                    if (e is UnknownHostException){
-                        callback.returnError(errorType = ErrorType.NO_CONNECTION)
-                    }else{
-                        callback.returnError(errorType = ErrorType.OTHER)
-                    }
-                }finally {
-                    connection?.disconnect()
-                }
-            }.start()
-        }
-        companion object{
-            private const val JOKE_URL = "https://official-joke-api.appspot.com/random_joke"
-        }
-    }
-    interface ServiceCallback {
-        fun returnSuccess(data : JokeCloud)
-        fun returnError(errorType : ErrorType)
-    }
-
-    enum class ErrorType {
-        NO_CONNECTION,
-        OTHER
-    }
+    @GET("random_joke")
+    fun joke(): Call<JokeCloud>
 
 }
