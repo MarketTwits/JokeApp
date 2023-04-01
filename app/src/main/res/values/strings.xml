@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">JokeApp</string>
+    <string name="no_connection_message">"Connection not avalilable, try again</string>
+    <string name="service_unavalible">"Service not avalilable, try again</string>
 </resources>
