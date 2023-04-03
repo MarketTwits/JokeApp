@@ -36,7 +36,9 @@ class MainViewModel(private val repository: Repository<JokeUI, Error>) {
     }
 
     fun changeJokeStatus() {
-        repository.changeJokeStatus(resultCallback)
+        Thread{
+            repository.changeJokeStatus(resultCallback)
+        }.start()
     }
 }
 

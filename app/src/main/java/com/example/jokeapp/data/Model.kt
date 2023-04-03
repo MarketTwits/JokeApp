@@ -7,7 +7,7 @@ interface Repository<S, E> {
     fun getData()
     fun clear()
     fun changeJokeStatus(resultCallback: ResultCallback<JokeUI, Error>)
-    abstract fun chooseFavorite(favorites: Boolean)
+     fun chooseFavorite(favorites: Boolean)
 }
 interface ResultCallback<S,E>{
     fun provideSuccess(data : S )
