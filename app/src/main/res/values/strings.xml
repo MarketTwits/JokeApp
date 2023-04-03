@@ -2,4 +2,6 @@
     <string name="app_name">JokeApp</string>
     <string name="no_connection_message">"Connection not avalilable, try again</string>
     <string name="service_unavalible">"Service not avalilable, try again</string>
+    <string name="show_favorite_joke">Show favorite joke</string>
+    <string name="no_favorite">No favorite items</string>
 </resources>

@@ -1,7 +1,12 @@
 package com.example.jokeapp
 
 import android.app.Application
-import com.google.gson.Gson
+import com.example.jokeapp.data.BaseRepository
+import com.example.jokeapp.data.cache.CacheDataSource
+import com.example.jokeapp.data.cloud.CloudDataSource
+import com.example.jokeapp.data.cloud.JokeService
+import com.example.jokeapp.presentation.MainViewModel
+import com.example.jokeapp.presentation.ManageResources
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -16,12 +21,15 @@ class CustomApp : Application() {
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl("https://official-joke-api.appspot.com/")
             .build()
+
         viewModel = MainViewModel(
-            BaseModel(
-                retrofit.create(JokeService::class.java),
-                ManageResources.Base(this)
+            BaseRepository(
+                CloudDataSource.Base(
+                    retrofit.create(JokeService::class.java),
+                    ManageResources.Base(this)
+                ),
+                CacheDataSource.Fake(  ManageResources.Base(this))
             )
         )
-        ManageResources.Base(this)
     }
 }

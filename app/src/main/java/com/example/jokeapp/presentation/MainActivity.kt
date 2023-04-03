@@ -1,8 +1,9 @@
-package com.example.jokeapp
+package com.example.jokeapp.presentation
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.example.jokeapp.CustomApp
 import com.example.jokeapp.databinding.ActivityMainBinding
 
 
@@ -25,14 +26,26 @@ class MainActivity : AppCompatActivity() {
             binding.progressBar.visibility = View.VISIBLE
             viewModel.getJoke()
         }
+        binding.checkBox.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.chooseFavorite(isChecked)
+        }
+        binding.btFavorite.setOnClickListener {
+            viewModel.changeJokeStatus()
+        }
 
-        val textCallback = object : TextCallback {
+
+        val textCallback = object : JokeUiCallback {
             override fun provideText(text: String) = runOnUiThread{
                 binding.button.isEnabled = true
                 binding.progressBar.visibility = View.INVISIBLE
                 binding.textView.text = text
             }
+
+            override fun provideIconResId(iconResId: Int) = runOnUiThread{
+               binding.btFavorite.setImageResource(iconResId)
+            }
         }
+
         viewModel.init(textCallback)
 
     }

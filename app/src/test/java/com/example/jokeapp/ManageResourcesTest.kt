@@ -1,5 +1,6 @@
 package com.example.jokeapp
 
+import com.example.jokeapp.presentation.ManageResources
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
