@@ -10,7 +10,7 @@ open class JokeCache : RealmObject(), Joke {
     var text : String = ""
     var punchline : String = ""
     var type : String = ""
-     override fun <T> map(mapper: Joke.Mapper<T>): T =
+     override suspend fun <T> map(mapper: Joke.Mapper<T>): T =
       mapper.map(type, text, punchline,id)
 
 }

@@ -1,15 +1,10 @@
 package com.example.jokeapp.data
 
+import com.example.jokeapp.data.cache.JokeResult
 import com.example.jokeapp.presentation.JokeUI
 
 interface Repository<S, E> {
-    fun init(resultCallback : ResultCallback<S, E>)
-    fun getData()
-    fun clear()
-    fun changeJokeStatus(resultCallback: ResultCallback<JokeUI, Error>)
+    suspend fun getData() : JokeResult
+    suspend fun changeJokeStatus() : JokeUI
      fun chooseFavorite(favorites: Boolean)
-}
-interface ResultCallback<S,E>{
-    fun provideSuccess(data : S )
-    fun provideError(error : E)
 }

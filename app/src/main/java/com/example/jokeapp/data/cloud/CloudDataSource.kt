@@ -1,17 +1,14 @@
 package com.example.jokeapp.data.cloud
 
 import com.example.jokeapp.data.Error
-import com.example.jokeapp.data.cache.JokeCallback
+import com.example.jokeapp.data.cache.JokeResult
 import com.example.jokeapp.presentation.ManageResources
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.net.ConnectException
 import java.net.UnknownHostException
 
 interface CloudDataSource {
 
-    fun getData(cloudCallback: JokeCallback)
+    suspend fun getData(): JokeResult
 
     class Base(
         private val jokeService: JokeService,
@@ -21,26 +18,17 @@ interface CloudDataSource {
         private var noConnection = Error.NoConnection(manageResources)
         private var serviceError = Error.ServiceUnavailable(manageResources)
 
-        override fun getData(cloudCallback: JokeCallback) {
-            jokeService.joke().enqueue(object : Callback<JokeCloud> {
-                override fun onResponse(call: Call<JokeCloud>, response: Response<JokeCloud>) {
-                    if (response.isSuccessful) {
-                        val body = response.body()
-                        if (body != null) {
-                            cloudCallback.provideJoke(body)
-                        }
-                    } else {
-                        cloudCallback.provideError(serviceError)
-                    }
+        override suspend fun getData(): JokeResult =
+             try {
+                val response = jokeService.joke().execute()
+                JokeResult.Success(response.body()!!, false)
+            } catch (e: Exception) {
+                if (e is UnknownHostException || e is ConnectException) {
+                    JokeResult.Failure(noConnection)
+                } else {
+                    JokeResult.Failure(serviceError)
                 }
-                override fun onFailure(call: Call<JokeCloud>, t: Throwable) {
-                    if (t is UnknownHostException || t is ConnectException) {
-                        cloudCallback.provideError(noConnection)
-                    } else {
-                        cloudCallback.provideError(serviceError)
-                    }
-                }
-            })
+            }
         }
     }
-}
+

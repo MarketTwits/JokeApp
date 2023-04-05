@@ -33,19 +33,16 @@ class MainActivity : AppCompatActivity() {
             viewModel.changeJokeStatus()
         }
         val textCallback = object : JokeUiCallback {
-            override fun provideText(text: String) = runOnUiThread{
+            override fun provideText(text: String) {
                 binding.button.isEnabled = true
                 binding.progressBar.visibility = View.INVISIBLE
                 binding.textView.text = text
             }
-
-            override fun provideIconResId(iconResId: Int) = runOnUiThread{
+            override fun provideIconResId(iconResId: Int) {
                binding.btFavorite.setImageResource(iconResId)
             }
         }
-
         viewModel.init(textCallback)
-
     }
     override fun onDestroy() {
         super.onDestroy()

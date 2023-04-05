@@ -6,10 +6,10 @@ import com.example.jokeapp.presentation.JokeUI
 
 interface Joke {
 
-    fun <T> map(mapper: Mapper<T>): T
+     suspend fun <T> map(mapper: Mapper<T>): T
 
     interface Mapper<T> {
-        fun map(
+        suspend fun map(
             type: String,
             mainText: String,
             punchline: String,
@@ -25,11 +25,11 @@ data class JokeDomain(
     private val id: Int,
 ) : Joke {
 
-    override fun <T> map(mapper: Joke.Mapper<T>): T = mapper.map(mainText, mainText, punchline, id)
+    override suspend fun <T> map(mapper: Joke.Mapper<T>): T = mapper.map(mainText, mainText, punchline, id)
 }
 
 class ToCache : Joke.Mapper<JokeCache> {
-    override fun map(
+    override suspend fun map(
         type: String,
         mainText: String,
         punchline: String,
@@ -46,20 +46,27 @@ class ToCache : Joke.Mapper<JokeCache> {
 }
 
 class ToBaseUi : Joke.Mapper<JokeUI> {
-    override fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
+    override suspend fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
         return JokeUI.Base(mainText, punchline)
     }
 }
 
 class ToFavoriteUi : Joke.Mapper<JokeUI> {
-    override fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
+    override suspend fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
         return JokeUI.Favorite(mainText, punchline)
     }
 }
 
-class Change(private val cacheDataSource: CacheDataSource) : Joke.Mapper<JokeUI> {
-    override fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
-        return cacheDataSource.addOrRemove(id, JokeDomain(type, mainText, punchline, id))
+class Change(
+    private val cacheDataSource: CacheDataSource,
+    private val toDomain: ToDomain) : Joke.Mapper<JokeUI> {
+    override suspend fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
+        return cacheDataSource.addOrRemove(id, toDomain.map(type, mainText, punchline, id))
+    }
+}
+class ToDomain() : Joke.Mapper<JokeDomain>{
+    override suspend fun map(type: String, mainText: String, punchline: String, id: Int): JokeDomain {
+        return JokeDomain(type, mainText, punchline, id)
     }
 }
 
