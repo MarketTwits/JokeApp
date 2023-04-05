@@ -32,8 +32,6 @@ class MainActivity : AppCompatActivity() {
         binding.btFavorite.setOnClickListener {
             viewModel.changeJokeStatus()
         }
-
-
         val textCallback = object : JokeUiCallback {
             override fun provideText(text: String) = runOnUiThread{
                 binding.button.isEnabled = true
