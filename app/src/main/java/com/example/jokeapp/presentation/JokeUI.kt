@@ -20,5 +20,5 @@ abstract class JokeUI(
     class Favorite(
         text: String, punchLine: String,
     ) : JokeUI(text, punchLine, R.drawable.fill_heart)
-    class Failed(text: String) : JokeUI(text, "failed", 0)
+    class Failed(text: String) : JokeUI(text, "", 0)
 }
