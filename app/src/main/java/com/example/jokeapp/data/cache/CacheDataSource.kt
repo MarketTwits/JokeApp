@@ -5,10 +5,8 @@ import com.example.jokeapp.presentation.JokeUI
 import com.example.jokeapp.presentation.ManageResources
 import io.realm.Realm
 
-interface CacheDataSource {
-    //JokeUI it's not current
+interface CacheDataSource : DataSource {
     suspend fun addOrRemove(id: Int, joke: JokeDomain): JokeUI
-    suspend fun getData(): JokeResult
 
     class Base(
         private val realm: ProvideRealm,
@@ -46,6 +44,9 @@ interface CacheDataSource {
            }
         }
     }
+    interface DataSource{
+        suspend fun getData() : JokeResult
+    }
 
     class Fake(
         private val manageResources: ManageResources,
@@ -77,6 +78,9 @@ interface CacheDataSource {
         }
 
     }
+}
+interface DataSource{
+    suspend fun getData() : JokeResult
 }
 
 interface JokeResult : Joke {

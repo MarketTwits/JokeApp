@@ -19,6 +19,7 @@ class MainViewModelTest {
     private lateinit var toBaseMapper: FakeMapper
     private lateinit var fakeJokeResultCallback: FakeJokeUiCallback
     private lateinit var dispatcherWrapper: DispatchersWrapper
+    private lateinit var communication: FakeCommunication
 
     @Before
     fun setUp() {
@@ -27,14 +28,17 @@ class MainViewModelTest {
         toBaseMapper = FakeMapper(false)
         fakeJokeResultCallback = FakeJokeUiCallback()
         dispatcherWrapper = FakeDispatchers()
-        viewModel = MainViewModel(repository, toFavoriteMapper, toBaseMapper, dispatcherWrapper)
-
-        viewModel.init(fakeJokeResultCallback)
+        communication = FakeCommunication()
+        viewModel = MainViewModel(
+            communication,
+            repository,
+            toFavoriteMapper,
+            toBaseMapper,
+            dispatcherWrapper
+        )
     }
-
     @Test
     fun test_successful_not_favorite() {
-        val log = Thread.currentThread().toString()
         repository.returnFetchResult = FakeJokeResult(
             FakeJoke("testType", "fakeTest", "testPunchline", 12),
             false,
@@ -42,16 +46,13 @@ class MainViewModelTest {
             "test_error_message"
         )
         viewModel.getJoke()
-        val expectedText = "fakeTest\ntestPunchline"
-        val expectedId = 12
-
-        assertEquals(expectedText, fakeJokeResultCallback.provideTextList[0])
-        assertEquals(expectedId, fakeJokeResultCallback.provideIconResId[0])
-        assertEquals(1, fakeJokeResultCallback.provideTextList.size)
-        assertEquals(1, fakeJokeResultCallback.provideIconResId.size)
+        val expected = FakeJokeUi("fakeTest", "testPunchline", 12, false )
+        val actual = communication.data
+        assertEquals(expected, actual)
     }
+
     @Test
-    fun test_successful_favorite(){
+    fun test_successful_favorite() {
         repository.returnFetchResult = FakeJokeResult(
             FakeJoke("testType", "fakeTest", "testPunchline", 15),
             true,
@@ -59,16 +60,14 @@ class MainViewModelTest {
             "test_error_message"
         )
         viewModel.getJoke()
-        val expectedText = "fakeTest\ntestPunchline"
-        val expectedId = 16
 
-        assertEquals(expectedText, fakeJokeResultCallback.provideTextList[0])
-        assertEquals(expectedId, fakeJokeResultCallback.provideIconResId[0])
-        assertEquals(1, fakeJokeResultCallback.provideTextList.size)
-        assertEquals(1, fakeJokeResultCallback.provideIconResId.size)
+        val expected = FakeJokeUi("fakeTest", "testPunchline", 15, true )
+        val actual = communication.data
+        assertEquals(expected, actual)
     }
+
     @Test
-    fun test_not_successful(){
+    fun test_not_successful() {
         repository.returnFetchResult = FakeJokeResult(
             FakeJoke("testType", "fakeTest", "testPunchline", 0),
             true,
@@ -76,16 +75,13 @@ class MainViewModelTest {
             "test_error_message"
         )
         viewModel.getJoke()
-        val expectedText = "test_error_message\n"
-        val expectedId = 0
 
-        assertEquals(expectedText, fakeJokeResultCallback.provideTextList[0])
-        assertEquals(expectedId, fakeJokeResultCallback.provideIconResId[0])
-
-        assertEquals(1, fakeJokeResultCallback.provideTextList.size)
-        assertEquals(1, fakeJokeResultCallback.provideIconResId.size)
+        val expected = JokeUI.Failed("test_error_message")
+        val actual = communication.data
+        assertEquals(actual, expected)
     }
 }
+
 private class FakeJokeUiCallback : JokeUiCallback {
     val provideTextList = mutableListOf<String>()
     override fun provideText(text: String) {
@@ -159,6 +155,13 @@ class FakeMapper(
 
     override suspend fun map(type: String, mainText: String, punchline: String, id: Int): JokeUI {
         return FakeJokeUi(text = mainText, punchline = punchline, id, toFavorite)
+    }
+}
+
+private class FakeCommunication : JokeCommunication {
+    lateinit var data: JokeUI
+    override fun map(data: JokeUI) {
+        this.data = data
     }
 }
 

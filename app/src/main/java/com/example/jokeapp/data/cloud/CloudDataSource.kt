@@ -1,15 +1,13 @@
 package com.example.jokeapp.data.cloud
 
 import com.example.jokeapp.data.Error
+import com.example.jokeapp.data.cache.DataSource
 import com.example.jokeapp.data.cache.JokeResult
 import com.example.jokeapp.presentation.ManageResources
 import java.net.ConnectException
 import java.net.UnknownHostException
 
-interface CloudDataSource {
-
-    suspend fun getData(): JokeResult
-
+interface CloudDataSource : DataSource {
     class Base(
         private val jokeService: JokeService,
         private val manageResources: ManageResources,

@@ -1,71 +1,96 @@
 package com.example.jokeapp.presentation
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.annotation.DrawableRes
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.jokeapp.data.*
 import kotlinx.coroutines.*
 
 class MainViewModel(
+    private val communication : JokeCommunication,
     private val repository: Repository<JokeUI, Error>,
     private val toFavoriteUi: Joke.Mapper<JokeUI> = ToFavoriteUi(),
     private val toBaseUi: Joke.Mapper<JokeUI> = ToBaseUi(),
-    private val dispatchersWrapper: DispatchersWrapper = DispatchersWrapper.Base()
-) : ViewModel() {
+    private val dispatchersWrapper: DispatchersWrapper = DispatchersWrapper.Base(),
+) : BaseViewModel(dispatchersWrapper), BaseObserve<JokeUI> {
 
-    private var jokeUiCallback: JokeUiCallback = JokeUiCallback.Empty()
-    private lateinit var job: Job
+
+    private val blockUi: suspend (JokeUI) -> Unit = {
+        communication.map(it)
+    }
+    override fun observe(owner: LifecycleOwner, observer: Observer<JokeUI>) {
+        communication.observe(owner, observer)
+    }
 
     fun getJoke() {
-        job = viewModelScope.launch(dispatchersWrapper.io()) {
+        handle({
             val result = repository.getData()
-            val ui = if (result.isSuccess()) {
+            if (result.isSuccess()) {
                 result.map(if (result.toFavorite()) toFavoriteUi else toBaseUi)
             } else {
-                JokeUI.Failed((result.errorMessage()))
+                JokeUI.Failed(result.errorMessage())
             }
-            withContext(dispatchersWrapper.ui()) {
-                ui.show(jokeUiCallback)
-            }
-        }
-    }
+        }, blockUi)
 
-    fun init(textCallback: JokeUiCallback) {
-        this.jokeUiCallback = textCallback
-    }
-
-    fun clear() {
-        jokeUiCallback = JokeUiCallback.Empty()
     }
 
     fun chooseFavorite(favorites: Boolean) {
-            repository.chooseFavorite(favorites)
+        repository.chooseFavorite(favorites)
     }
+
     fun changeJokeStatus() {
-        viewModelScope.launch(dispatchersWrapper.io()) {
-            val jokeUi = repository.changeJokeStatus()
-            withContext(dispatchersWrapper.ui()) {
-                jokeUi.show(jokeUiCallback)
-            }
-        }
+        handle({
+            repository.changeJokeStatus()
+        }, blockUi)
     }
 }
 
 interface JokeUiCallback {
     fun provideText(text: String)
     fun provideIconResId(@DrawableRes iconResId: Int)
-    class Empty : JokeUiCallback {
-        override fun provideText(text: String) = Unit
-        override fun provideIconResId(iconResId: Int) = Unit
-    }
 }
-interface DispatchersWrapper{
-    fun io() : CoroutineDispatcher
-    fun ui() : CoroutineDispatcher
 
-    class Base() : DispatchersWrapper{
+interface DispatchersWrapper {
+    fun io(): CoroutineDispatcher
+    fun ui(): CoroutineDispatcher
+
+    class Base() : DispatchersWrapper {
         override fun io(): CoroutineDispatcher = Dispatchers.IO
         override fun ui(): CoroutineDispatcher = Dispatchers.Main
     }
 }
+interface BaseObserve<T : Any>{
+    fun observe(owner: LifecycleOwner, observer: Observer<T>) = Unit
+}
+interface Communication<T : Any> : BaseObserve<T> {
+    fun map(data: T)
+    abstract class Abstract<T : Any>(
+        private val liveData: MutableLiveData<T> = MutableLiveData(),
+    ) : Communication<T> {
+        override fun map(data: T) {
+            liveData.value = data
+        }
+        override fun observe(owner: LifecycleOwner, observer: Observer<T>) {
+            liveData.observe(owner, observer)
+        }
+    }
+}
+interface JokeCommunication : Communication<JokeUI>{
+    class Base : Communication.Abstract<JokeUI>(), JokeCommunication
+}
+
+abstract class BaseViewModel(
+    private val dispatchersWrapper: DispatchersWrapper,
+) : ViewModel() {
+    fun <T> handle(
+        blockIo: suspend () -> T,
+        blockUi: suspend (T) -> Unit,
+    ) = viewModelScope.launch(dispatchersWrapper.io()) {
+        val result = blockIo.invoke()
+        withContext(dispatchersWrapper.ui()) {
+            blockUi.invoke(result)
+        }
+    }
+}
+

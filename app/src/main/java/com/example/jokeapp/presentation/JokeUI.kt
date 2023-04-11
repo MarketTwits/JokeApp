@@ -14,11 +14,11 @@ abstract class JokeUI(
         textCallback.provideText("$text\n$punchLine")
         textCallback.provideIconResId(iconResId)
     }
-    class Base(
-        text: String, punchLine: String,
+    data class Base(
+        private val text: String, private val punchLine: String,
     ) : JokeUI(text, punchLine, R.drawable.regular_heart)
-    class Favorite(
-        text: String, punchLine: String,
+    data class Favorite(
+        private val text: String, private val punchLine: String,
     ) : JokeUI(text, punchLine, R.drawable.fill_heart)
-    class Failed(text: String) : JokeUI(text, "", 0)
+    data class Failed(private val text: String) : JokeUI(text, "", 0)
 }
